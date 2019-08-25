@@ -1,10 +1,9 @@
 const express = require('express');
 const server = express();
 
-server.use(express.json());
+// constants
 
-// mock de projetos
-
+const REQUEST = 'This request took';
 const projects = [{
   id: "0",
   title: 'Projeto Zero',
@@ -23,7 +22,16 @@ const projects = [{
   ]
 }];
 
+server.use(express.json());
+
 // middlewares
+
+server.use((req, res, next) => { 
+  console.time(REQUEST);
+  console.log(`[ ${req.method} ] ${req.url} - Status code: ${res.statusCode}`);
+  next();
+  console.timeEnd(REQUEST);
+});
 
 // routes
 
@@ -37,20 +45,26 @@ server.get('/projects', (req, res) => {
   return res.json(projects);
 });
 
-/* PUT /projects/:id: A rota deve alterar apenas o título do projeto com o id 
-presente nos parâmetros da rota; */
+server.put('/projects/:id', (req, res) => { 
+  const id = req.params.id;
+  const title = req.body.title;
+  const project = projects.find(proj => proj.id == id);
+  project.title = title;
+  return res.json(project); 
+});
 
-// server.put();
+server.delete('/projects/:id', (req, res) => { 
+  const index = projects.findIndex(proj => proj.id == id);
+  projects.splice(index, 1);
+  return res.send();
+});
 
-/* DELETE /projects/:id: A rota deve deletar o projeto com o id presente nos 
-parâmetros da rota; */
-
-// server.delete();
-
-/* POST /projects/:id/tasks: A rota deve receber um campo title e armazenar uma 
-nova tarefa no array de tarefas de um projeto específico escolhido através do id 
-presente nos parâmetros da rota; */
-
-// server.post();
+server.post('/projects/:id/tasks', (req, res) => { 
+  const id = req.params.id;
+  const newTask = req.body.title;
+  const project = projects.find(proj => proj.id == id);
+  project.tasks.push(newTask);
+  return res.json(project);
+});
 
 server.listen(3333);
