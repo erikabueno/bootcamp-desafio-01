@@ -4,6 +4,7 @@ const server = express();
 // constants
 
 const REQUEST = 'This request took';
+
 const projects = [{
   id: "0",
   title: 'Projeto Zero',
@@ -22,6 +23,8 @@ const projects = [{
   ]
 }];
 
+let requests = 0;
+
 server.use(express.json());
 
 // middlewares
@@ -33,19 +36,34 @@ server.use((req, res, next) => {
   console.timeEnd(REQUEST);
 });
 
+function checkProject(req, res, next) { 
+  const id = req.params.id;
+  const project = projects.find(proj => proj.id == id);
+  if (!project) { 
+    return res.status(400).json({ error: 'Projeto não encontrado'});
+  }
+  return next();
+}
+
+function countRequests(req, res, next) { 
+  requests++;
+  console.log(`Number of requests so far: ${requests}.`);
+  return next();
+}
+
 // routes
 
-server.post('/projects', (req, res) => { 
+server.post('/projects', countRequests, (req, res) => { 
   const project = req.body;
   projects.push(project);
   return res.json(projects);
 });
 
-server.get('/projects', (req, res) => { 
+server.get('/projects', countRequests, (req, res) => { 
   return res.json(projects);
 });
 
-server.put('/projects/:id', (req, res) => { 
+server.put('/projects/:id', countRequests, checkProject, (req, res) => { 
   const id = req.params.id;
   const title = req.body.title;
   const project = projects.find(proj => proj.id == id);
@@ -53,13 +71,13 @@ server.put('/projects/:id', (req, res) => {
   return res.json(project); 
 });
 
-server.delete('/projects/:id', (req, res) => { 
+server.delete('/projects/:id', countRequests, checkProject, (req, res) => { 
   const index = projects.findIndex(proj => proj.id == id);
   projects.splice(index, 1);
   return res.send();
 });
 
-server.post('/projects/:id/tasks', (req, res) => { 
+server.post('/projects/:id/tasks', countRequests, checkProject, (req, res) => { 
   const id = req.params.id;
   const newTask = req.body.title;
   const project = projects.find(proj => proj.id == id);
