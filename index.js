@@ -23,8 +23,6 @@ const projects = [{
   ]
 }];
 
-let requests = 0;
-
 server.use(express.json());
 
 // middlewares
@@ -44,6 +42,8 @@ function checkProject(req, res, next) {
   }
   return next();
 }
+
+let requests = 0;
 
 function countRequests(req, res, next) { 
   requests++;
